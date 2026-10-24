@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp"
+      ]
+    },
+    "docslim": {
+      "command": "docslim.cmd",
+      "args": [
+        "serve",
+        "--mcp"
+      ]
+    }
+  }
+}
