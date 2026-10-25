@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenCode](https://img.shields.io/badge/OpenCode-CLI%20%26%20Desktop-blueviolet.svg)](https://opencode.ai)
 [![Google Antigravity](https://img.shields.io/badge/Google-Antigravity%20AGY-blue.svg)](https://antigravity.google)
+[![Always On](https://img.shields.io/badge/Configuration-Always--On%20(Default)-brightgreen.svg)](#always-on-by-default)
 [![Token Savings](https://img.shields.io/badge/Token%20Savings-Up%20to%2095%25-brightgreen.svg)](#benchmarks)
 
 A production-grade collection of plugins, MCP servers, and in-process hooks designed to **slash LLM token consumption by 60% to 95%** across **OpenCode (CLI & Desktop)** and **Google Antigravity** without losing reasoning accuracy or developer performance.
@@ -19,6 +20,18 @@ A production-grade collection of plugins, MCP servers, and in-process hooks desi
 | **CodeGraph MCP** | OpenCode & Antigravity | **-50% to -70%** | Pre-indexes codebase AST & call-graph. Replaces 30+ grep/read cycles with a single surgical query. |
 | **OpenSlimedit** | OpenCode | **-25% to -45%** | Strips verbose tool descriptions and enables line-range editing (`"55-64"`). |
 | **Dynamic Context Pruning (DCP)** | OpenCode | **-30% to -50%** | Prunes stale tool outputs from conversation history. |
+
+---
+
+## 🔒 Always-On by Default
+
+All components in this pack are engineered to be **permanently enabled by default**:
+* **OpenCode (CLI & Desktop):** 
+  * In-process TypeScript hooks (`rtk.ts`, `docslim-guard.ts`) are placed in `~/.config/opencode/plugins/` and automatically executed upon engine startup.
+  * Directory junctions bridge `~/.opencode` and `%APPDATA%\opencode` to `~/.config/opencode`, guaranteeing identical behavior in OpenCode Desktop.
+* **Google Antigravity:** 
+  * Plugins (`rtk`, `docslim`) are explicitly registered with `"enabled": true` in `~/.gemini/config/config.json`.
+  * MCP servers (`docslim`, `codegraph`) run automatically in background on agent invocation.
 
 ---
 
@@ -45,7 +58,7 @@ A production-grade collection of plugins, MCP servers, and in-process hooks desi
 ## 🛠️ Quick Installation
 
 ### Windows (PowerShell)
-Clone this repository and run the installer:
+Clone this repository and run the automated installer:
 
 ```powershell
 git clone https://github.com/XDsiroriginal/opencode-antigravity-token-optimizer.git
@@ -53,51 +66,30 @@ cd opencode-antigravity-token-optimizer
 .\install.ps1
 ```
 
-### Manual Configuration
-
-#### 1. OpenCode (`~/.config/opencode/opencode.json`)
-```jsonc
-{
-  "plugin": [
-    "openslimedit",
-    "@tarquinen/opencode-dcp"
-  ],
-  "mcp": {
-    "servers": {
-      "codegraph": {
-        "type": "local",
-        "command": ["codegraph", "serve", "--mcp"]
-      },
-      "docslim": {
-        "type": "local",
-        "command": ["docslim.cmd", "serve", "--mcp"]
-      }
-    }
-  }
-}
-```
-
-#### 2. Google Antigravity (`~/.gemini/config/mcp_config.json`)
-```json
-{
-  "mcpServers": {
-    "codegraph": {
-      "command": "codegraph",
-      "args": ["serve", "--mcp"]
-    },
-    "docslim": {
-      "command": "docslim.cmd",
-      "args": ["serve", "--mcp"]
-    }
-  }
-}
+### Linux / macOS (Bash)
+```bash
+git clone https://github.com/XDsiroriginal/opencode-antigravity-token-optimizer.git
+cd opencode-antigravity-token-optimizer
+chmod +x install.sh
+./install.sh
 ```
 
 ---
 
-## 🧪 Testing the Suite
+## 🔍 Verification
 
-DocSlim includes a built-in verification suite:
+To verify that the MCP servers and plugins are running properly:
+
+```bash
+# In OpenCode:
+opencode mcp list
+
+# Expected:
+# • ✓ codegraph connected
+# • ✓ docslim connected
+```
+
+To run the verification test suite:
 
 ```bash
 python docslim/test_docslim.py
