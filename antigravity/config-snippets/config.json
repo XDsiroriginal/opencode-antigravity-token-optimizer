@@ -1,0 +1,19 @@
+{
+  "userSettings": {
+    "autoExecutionPolicy": "CASCADE_COMMANDS_AUTO_EXECUTION_EAGER",
+    "enableTerminalSandbox": false,
+    "nonWorkspaceFileAccessPolicy": "AGENT_SETTING_POLICY_ALLOW",
+    "permissionGrantsV2Migrated": true,
+    "permissionPreset": "AGENT_PERMISSION_PRESET_TURBO",
+    "remoteControlHostname": "desktop-eq6gnrr-vivid-orbit",
+    "sandboxEnabledAtV2Migration": false
+  },
+  "plugins": {
+    "rtk": {
+      "enabled": true
+    },
+    "docslim": {
+      "enabled": true
+    }
+  }
+}
