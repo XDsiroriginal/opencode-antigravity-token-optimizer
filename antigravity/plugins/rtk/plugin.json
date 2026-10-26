@@ -1,5 +1,4 @@
 {
   "name": "rtk",
-  "version": "1.0.0",
-  "description": "Antigravity plugin for transparent command rewriting and token optimization using rtk"
+  "description": "Condenses terminal command output with the rtk CLI to cut token usage"
 }

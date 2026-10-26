@@ -1,18 +1,12 @@
 {
-  "mcpServers": {
-    "codegraph": {
-      "command": "codegraph",
-      "args": [
-        "serve",
-        "--mcp"
-      ]
-    },
-    "docslim": {
-      "command": "docslim.cmd",
-      "args": [
-        "serve",
-        "--mcp"
-      ]
+    "mcpServers": {
+        "docslim": {
+            "command": "python",
+            "args": [
+                "C:\\Users\\<you>\\.gemini\\config\\tools\\docslim\\docslim.py",
+                "serve",
+                "--mcp"
+            ]
+        }
     }
-  }
 }
