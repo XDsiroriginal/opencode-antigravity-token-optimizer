@@ -578,6 +578,27 @@ def run_mcp_server():
                 }
             sys.stdout.write(json.dumps(res) + "\n")
             sys.stdout.flush()
+        elif method == "ping":
+            sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": req_id, "result": {}}) + "\n")
+            sys.stdout.flush()
+        elif method == "resources/list":
+            sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": req_id, "result": {"resources": []}}) + "\n")
+            sys.stdout.flush()
+        elif method == "prompts/list":
+            sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": req_id, "result": {"prompts": []}}) + "\n")
+            sys.stdout.flush()
+        elif req_id is not None:
+            # Any unanswered request makes the client wait forever. Newer MCP
+            # clients (e.g. Antigravity, protocol 2026-07-28) probe with
+            # `server/discover` first and need a real JSON-RPC error to fall
+            # back to `initialize`; silence here deadlocks them.
+            res = {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "error": {"code": -32601, "message": f"Method not found: {method}"},
+            }
+            sys.stdout.write(json.dumps(res) + "\n")
+            sys.stdout.flush()
 
 
 def main():

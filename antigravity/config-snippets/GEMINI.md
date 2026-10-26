@@ -1,11 +1,31 @@
 # Token Optimization & High Performance Guidelines
 
-- **Surgical Context Retrieval**: When reading large files, always specify line bounds (`StartLine` and `EndLine`) instead of dumping entire files into the context window.
-- **Semantic Codebase Exploration**: Use CodeGraph MCP tools (`codegraph_explore`) to jump directly to symbols, call graphs, and definitions instead of multi-turn brute-force grep loops.
-- **Web Pages & URLs**: NEVER use `curl` or raw HTTP GET to dump HTML into the prompt. Use `smart_read_web` MCP tool or `docslim web <url>`. It converts HTML to clean, noise-free Markdown, stripping scripts, styles, and navigation (saves 90-95% tokens).
-- **PDF Documents**: NEVER dump entire raw PDFs into context. Use `smart_read_pdf` MCP tool or `docslim pdf <file> --pages <range>`. It extracts TOC and page windows with running headers/footers removed.
-- **Tables & Tabular Data (CSV/TSV/XLSX)**: NEVER read massive CSVs directly into the context window. Use `smart_read_table` MCP tool or `docslim table <file> --sample <N> --query <term>`. It extracts schema, row count, and preview rows (saves 95%+ tokens).
-- **Images & Vision**: When inspecting high-resolution screenshots or photos, use `smart_read_image` MCP tool or `docslim image <file>` to downscale to optimal vision resolution (saves up to 75% vision tokens).
-- **Compact Edits**: Use targeted `edit_file` calls for minimal contiguous hunks. Do not reproduce hundreds of lines of unchanged code.
-- **Condensed Command Output**: Terminal outputs are intercepted and compressed by RTK. Treat condensed outputs as complete results; do not re-run verbose commands unless output was explicitly garbled.
-- **Terse and Direct Communication**: Avoid unnecessary conversational filler, boilerplate summaries of untouched files, or redundant restatements of code diffs.
+This block is installed by the pack. It is always active.
+
+## Mandatory tool routing
+
+- **Web pages & URLs**: never dump raw HTML with `curl` / `Invoke-WebRequest`. Use the
+  `smart_read_web` MCP tool, or `docslim web <url>` in the terminal. It returns clean
+  Markdown without scripts, CSS, navigation or ads (saves 90-95% tokens).
+- **PDF documents**: never paste a whole PDF into context. Use `smart_read_pdf` with a
+  page range or a query, or `docslim pdf <file> --pages <range>`.
+- **Tables (CSV / TSV / XLSX)**: never read a whole table. Use `smart_read_table`, or
+  `docslim table <file> --sample <N> --query <term>`. It returns schema, row count and
+  a preview (saves 95%+ tokens).
+- **Images & screenshots**: use `smart_read_image` (or `docslim image <file>`) to
+  downscale to optimal vision resolution before analysis.
+- **Large text / logs / markdown**: use `smart_read_doc` instead of reading a huge file
+  line by line.
+- **Terminal output**: when the `rtk` PreToolUse hook is active, shell output is condensed.
+  Treat a condensed result as complete; do not re-run the command in verbose form. If a
+  result is clearly unusable (empty, garbled, or contradicting its exit code), re-run it
+  with `RTK_DISABLED=1` in front of the command.
+
+## Context discipline
+
+- **Surgical context retrieval**: when reading large files, always specify line bounds
+  (`StartLine` / `EndLine`) instead of dumping the entire file into the context window.
+- **Compact edits**: use targeted `edit_file` calls with minimal contiguous hunks. Never
+  reproduce hundreds of lines of unchanged code.
+- **Terse communication**: no filler, no restating untouched files, no repeating diffs.
+- **Batch related commands** into one call to save turns.

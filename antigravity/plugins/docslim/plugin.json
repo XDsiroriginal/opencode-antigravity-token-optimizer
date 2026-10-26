@@ -1,5 +1,4 @@
 {
   "name": "docslim",
-  "version": "1.0.0",
-  "description": "Intelligent token optimizer for web pages, PDF documents, CSV/Excel tables, and vision images"
+  "description": "Token-efficient reading of web pages, PDFs, tables and images"
 }

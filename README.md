@@ -17,7 +17,7 @@ A production-grade collection of plugins, MCP servers, and in-process hooks desi
 | **DocSlim MCP Server** | OpenCode & Antigravity | **-80% to -95%** | Smart document, web, PDF, table (CSV/XLSX), and image (Vision) token optimizer. |
 | **DocSlim Guard Plugin** | OpenCode (In-Process) | **-90%** | Intercepts `curl`, `cat *.csv`, `cat *.pdf` before execution and rewrites them into token-optimized calls. |
 | **RTK (Rust Token Killer)** | OpenCode & Antigravity | **-60% to -90%** | Intercepts terminal commands (`git status`, `pytest`, `npm test`, `cargo build`) and condenses output. |
-| **CodeGraph MCP** | OpenCode & Antigravity | **-50% to -70%** | Pre-indexes codebase AST & call-graph. Replaces 30+ grep/read cycles with a single surgical query. |
+| **CodeGraph MCP** *(optional, not bundled)* | OpenCode & Antigravity | **-50% to -70%** | Pre-indexes codebase AST & call-graph. Replaces 30+ grep/read cycles with a single surgical query. Requires a separate install and an index run; the pack does not ship it. |
 | **OpenSlimedit** | OpenCode | **-25% to -45%** | Strips verbose tool descriptions and enables line-range editing (`"55-64"`). |
 | **Dynamic Context Pruning (DCP)** | OpenCode | **-30% to -50%** | Prunes stale tool outputs from conversation history. |
 
@@ -25,13 +25,25 @@ A production-grade collection of plugins, MCP servers, and in-process hooks desi
 
 ## 🔒 Always-On by Default
 
-All components in this pack are engineered to be **permanently enabled by default**:
-* **OpenCode (CLI & Desktop):** 
-  * In-process TypeScript hooks (`rtk.ts`, `docslim-guard.ts`) are placed in `~/.config/opencode/plugins/` and automatically executed upon engine startup.
-  * Directory junctions bridge `~/.opencode` and `%APPDATA%\opencode` to `~/.config/opencode`, guaranteeing identical behavior in OpenCode Desktop.
-* **Google Antigravity:** 
-  * Plugins (`rtk`, `docslim`) are explicitly registered with `"enabled": true` in `~/.gemini/config/config.json`.
-  * MCP servers (`docslim`, `codegraph`) run automatically in background on agent invocation.
+Components are enabled at the **global** scope, so every session loads them:
+* **OpenCode (CLI & Desktop):**
+  * In-process TypeScript hooks (`rtk.ts`, `docslim-guard.ts`) are placed in
+    `~/.config/opencode/plugins/` and loaded at engine startup.
+  * `rtk.ts` self-disables with a warning when no `rtk` binary is on `PATH`, so a missing
+    binary never breaks a session.
+* **Google Antigravity:**
+  * Plugins (`rtk`, `docslim`) live in `~/.gemini/config/plugins/<name>/` and are marked
+    `"enabled": true` in `~/.gemini/config/config.json`.
+  * The `docslim` MCP server is registered **once**, in the global
+    `~/.gemini/config/mcp_config.json`, and started as `python .../docslim.py serve --mcp`.
+  * `GEMINI.md` tells the agent *when* to call these tools - a registered tool the agent
+    never chooses saves nothing.
+
+> ⚠️ The installers **merge** `mcp_config.json`, `config.json`, `GEMINI.md` and
+> `instructions.md` (with backups) instead of replacing them. Earlier versions copied
+> whole files over the user's config, which silently wiped unrelated MCP servers and SSH
+> instructions.
+
 
 ---
 
@@ -58,7 +70,8 @@ All components in this pack are engineered to be **permanently enabled by defaul
 ## 🛠️ Quick Installation
 
 ### Windows (PowerShell)
-Clone this repository and run the automated installer:
+Prerequisites: Python 3.9+ on `PATH`, and a restart of both apps afterwards.
+The installer backs up every file it touches and merges rather than replaces.
 
 ```powershell
 git clone https://github.com/XDsiroriginal/opencode-antigravity-token-optimizer.git
@@ -105,6 +118,36 @@ Expected output:
 ✓ MCP Server stdio protocol passed!
 ALL 6 DOCSLIM MODULE TESTS PASSED 100%!
 ```
+
+---
+
+## 🩺 Troubleshooting (symptoms seen in the wild)
+
+These four failures are silent - nothing crashes, the agent just stops acting. All of
+them are fixed in this version.
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| Antigravity ignores the prompt; every terminal command fails; the agent "does nothing" | `~/.gemini/config/plugins/rtk/hooks.json` runs `rtk hook antigravity` on every `run_command`, but no `rtk` binary exists → the PreToolUse hook exits non-zero and blocks the call | install `rtk`, or delete `hooks.json` (the installer now only writes it when the binary is present) |
+| `language_server.log`: `MCP: 1 server(s) still connecting after 30s: docslim` | two causes: (1) Node/Electron cannot spawn `docslim.cmd` (`spawn EINVAL`); (2) newer MCP clients (protocol `2026-07-28`) open with `server/discover`, and DocSlim answered unknown methods with **silence**, so the client waited forever | point the server at `python.exe` + `docslim.py` and answer unknown methods with JSON-RPC `-32601` |
+| A plugin was copied into `~/.gemini/config/plugins/` but never loads | `plugin.json` contained `"version"`, which the manifest schema rejects (`additionalProperties: false`) | keep only `name` and `description` |
+| Other MCP servers (git, databases, ...) disappeared after installing the pack | the installer overwrote the global `mcp_config.json` | merge, back up, and only touch the `docslim` key |
+
+Diagnose in one command:
+
+```powershell
+Get-Content "$env:APPDATA\Antigravity\logs\language_server.log" -Tail 40 |
+  Select-String 'MCP|sidecar|error'
+```
+
+Also check whether the binary a hook calls actually exists before blaming the model:
+
+```powershell
+(Get-Command rtk, python -ErrorAction SilentlyContinue).Source
+```
+
+> A registered MCP server is not a used MCP server. Keep the `GEMINI.md` routing rules
+> installed, otherwise the agent will keep calling `curl` instead of `smart_read_web`.
 
 ---
 
